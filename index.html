@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Búsqueda de Marcas · México</title>
+  <style>
+    :root {
+      --primary: #4338ca;
+      --primary-dark: #3730a3;
+      --primary-light: #eef2ff;
+      --accent: #0ea5e9;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --ok: #16a34a;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 320px);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    /* ---------- Encabezado ---------- */
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      padding: 38px 20px 46px;
+      text-align: center;
+    }
+    header .badge {
+      display: inline-block;
+      font-size: 13px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      background: rgba(255,255,255,.15);
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+    header h1 { font-size: 30px; font-weight: 700; }
+    header p { opacity: .9; margin-top: 8px; font-size: 16px; }
+
+    /* ---------- Contenedor principal ---------- */
+    main {
+      max-width: 720px;
+      margin: -28px auto 60px;
+      padding: 0 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 30px 28px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .step .num {
+      flex: 0 0 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      display: grid;
+      place-items: center;
+    }
+    .step h2 { font-size: 18px; font-weight: 650; }
+
+    .hint { color: var(--muted); font-size: 14px; margin: 2px 0 14px 38px; }
+
+    label.field { display: block; margin-left: 38px; }
+
+    input[type="text"], textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 15px;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
+      background: #fff;
+    }
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(67, 56, 202, .12);
+    }
+    textarea { resize: vertical; min-height: 90px; }
+
+    .divider { height: 1px; background: var(--border); margin: 30px 0; }
+
+    /* ---------- Botón principal ---------- */
+    .acciones { margin-top: 28px; text-align: center; }
+    button.buscar {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 15px 34px;
+      font-size: 17px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: background .15s, transform .05s;
+      font-family: inherit;
+    }
+    button.buscar:hover { background: var(--primary-dark); }
+    button.buscar:active { transform: translateY(1px); }
+
+    .error-msg {
+      color: #dc2626;
+      font-size: 14px;
+      margin-top: 12px;
+      min-height: 18px;
+    }
+
+    /* ---------- Lista de clases (casillas) ---------- */
+    .clases-lista {
+      max-height: 260px;
+      overflow-y: auto;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 6px;
+    }
+    .clase-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 14.5px;
+    }
+    .clase-item:hover { background: var(--primary-light); }
+    .clase-item input { margin-top: 3px; flex: 0 0 auto; width: 17px; height: 17px; accent-color: var(--primary); cursor: pointer; }
+    .clase-item .cnum { font-weight: 700; color: var(--primary); white-space: nowrap; }
+    .clase-item.activa { background: var(--primary-light); }
+
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 4px;
+      vertical-align: middle;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+      white-space: nowrap;
+    }
+    .tag-dir { background: #dcfce7; color: #15803d; }
+    .tag-rel { background: #fef9c3; color: #a16207; }
+
+    .toggle-todas {
+      background: none;
+      border: 1.5px dashed var(--border);
+      color: var(--primary-dark);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+      text-align: left;
+      margin-top: 14px;
+    }
+    .toggle-todas:hover { border-color: var(--primary); }
+
+    .barra-sel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .contador { font-size: 14px; color: var(--muted); font-weight: 600; }
+    .btn-continuar {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 11px;
+      padding: 13px 28px;
+      font-size: 16px;
+      font-weight: 650;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-continuar:hover { background: var(--primary-dark); }
+    .btn-volver {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 0;
+      margin-bottom: 16px;
+    }
+    .btn-volver:hover { text-decoration: underline; }
+
+    /* ---------- Resultado / resumen ---------- */
+    #resultado { margin-top: 26px; }
+    .resumen {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 28px 26px;
+    }
+    .resumen .ok-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ecfdf5;
+      color: var(--ok);
+      font-weight: 650;
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+    .resumen h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 4px; }
+    .resumen .marca-grande { font-size: 28px; font-weight: 800; color: var(--primary-dark); margin-bottom: 18px; word-break: break-word; }
+    .resumen .bloque { margin-bottom: 22px; }
+    .resumen .bloque p { font-size: 15.5px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .chip {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
+
+    .sugerencias { list-style: none; margin: 6px 0 4px; }
+    .sugerencias li { padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+    .sugerencias li:last-child { border-bottom: none; }
+    .sugerencias .cnum { font-weight: 700; color: var(--primary); }
+    .nota { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+
+    /* ---------- Caja del IMPI ---------- */
+    .impi-box { margin-top: 10px; background: #f1f5f9; border-radius: 14px; padding: 20px; }
+    .impi-box h3 { font-size: 16px; color: var(--text); text-transform: none; letter-spacing: 0; margin-bottom: 8px; }
+    .instr-impi { font-size: 14.5px; color: var(--text); margin-bottom: 14px; }
+    .impi-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+    .btn-impi { display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: #fff; border: none; border-radius: 11px; padding: 13px 20px; font-size: 15px; font-weight: 650; cursor: pointer; font-family: inherit; }
+    .btn-impi:hover { background: var(--primary-dark); }
+    .btn-impi.sec { background: #fff; color: var(--primary-dark); border: 1.5px solid var(--primary); }
+    .copia-ok { font-size: 14px; color: var(--ok); min-height: 20px; margin-top: 12px; font-weight: 600; }
+    .impi-url { display: inline-block; word-break: break-all; font-size: 13px; color: var(--primary-dark); margin-top: 6px; }
+
+    /* ---------- Caja para anexar la búsqueda del IMPI ---------- */
+    .anexar-box { margin-top: 14px; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 20px; }
+    .anexar-box h3 { font-size: 16px; color: var(--text); text-transform: none; letter-spacing: 0; margin-bottom: 8px; }
+    .anexar-box input[type="file"] { display: block; margin-bottom: 12px; font-size: 14px; }
+    .anexar-box textarea { width: 100%; min-height: 80px; margin-bottom: 12px; }
+    .btn-anexar { background: #d97706; color: #fff; border: none; border-radius: 11px; padding: 13px 22px; font-size: 15px; font-weight: 650; cursor: pointer; font-family: inherit; }
+    .btn-anexar:hover { background: #b45309; }
+
+    /* ---------- Tablero / dashboard ---------- */
+    .dash-box { margin-top: 14px; background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 22px; }
+    .dash-box h3 { font-size: 17px; color: var(--text); text-transform: none; letter-spacing: 0; margin-bottom: 6px; }
+    .dash-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+    .dash-inputs label { font-size: 13px; color: var(--muted); font-weight: 600; display: flex; flex-direction: column; gap: 5px; }
+    .dash-inputs input { border: 1.5px solid var(--border); border-radius: 9px; padding: 9px 11px; font-size: 15px; font-family: inherit; color: var(--text); }
+    .dash-inputs input:focus { outline: none; border-color: var(--primary); }
+    .dash-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0 4px; }
+    .dash-card { background: var(--primary-light); border-radius: 12px; padding: 16px 8px; text-align: center; }
+    .dash-num { font-size: 30px; font-weight: 800; color: var(--primary-dark); line-height: 1.1; }
+    .dash-lbl { font-size: 12px; color: var(--muted); margin-top: 5px; font-weight: 600; }
+    .dash-gauge { text-align: center; margin-top: 10px; }
+    .dash-verdict { font-size: 18px; font-weight: 700; margin-top: 2px; }
+    .dash-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    @media (max-width: 520px) { .dash-inputs { grid-template-columns: 1fr; } .dash-num { font-size: 24px; } }
+
+    /* ---------- Cobertura sugerida ---------- */
+    .cob-clase { border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+    .cob-head { font-weight: 650; font-size: 15px; margin-bottom: 10px; }
+    .cob-head .cnum { color: var(--primary); font-weight: 700; }
+    .cob-lista { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+    .cob-item { display: flex; gap: 8px; align-items: flex-start; font-size: 14.5px; cursor: pointer; }
+    .cob-item input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--primary); flex: 0 0 auto; cursor: pointer; }
+    .btn-mini { background: var(--primary-light); color: var(--primary-dark); border: none; border-radius: 8px; padding: 8px 14px; font-size: 13.5px; font-weight: 650; cursor: pointer; font-family: inherit; }
+    .btn-mini:hover { background: #e0e7ff; }
+
+    /* ---------- Pie ---------- */
+    footer {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 0 20px 40px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 24px; }
+      .hint, label.field { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="badge">🔍 IMPI · México</span>
+    <h1>Búsqueda de Marcas</h1>
+    <p>Verifica si la marca que quieres registrar está disponible</p>
+  </header>
+
+  <main>
+    <form class="card" id="formBusqueda" novalidate>
+      <!-- Paso 1: la marca -->
+      <div class="step">
+        <span class="num">1</span>
+        <h2>¿Qué marca quieres registrar?</h2>
+      </div>
+      <p class="hint">Escribe el nombre, palabra o frase que quieres proteger.</p>
+      <label class="field">
+        <input type="text" id="marca" placeholder="Ej. Café del Valle" autocomplete="off" />
+      </label>
+
+      <div class="divider"></div>
+
+      <!-- Paso 2: productos o servicios -->
+      <div class="step">
+        <span class="num">2</span>
+        <h2>¿Qué productos o servicios quieres proteger?</h2>
+      </div>
+      <p class="hint">Describe con tus palabras lo que vendes u ofreces. Sé específico.</p>
+      <label class="field">
+        <textarea id="productos" placeholder="Ej. Venta de café molido, granos de café y bebidas de café para llevar."></textarea>
+      </label>
+
+      <div class="acciones">
+        <button type="submit" class="buscar">Buscar clases sugeridas</button>
+        <p class="error-msg" id="errorMsg"></p>
+      </div>
+    </form>
+
+    <section id="resultado"></section>
+  </main>
+
+  <footer>
+    Esta herramienta ofrece un análisis <strong>preliminar</strong> y no sustituye la búsqueda oficial
+    ante el IMPI ni la asesoría de un especialista en propiedad industrial.
+  </footer>
+
+  <script>
+    // ----------------------------------------------------------
+    // Las 45 clases de la Clasificación de Niza (usada en México)
+    // 1–34: productos · 35–45: servicios
+    // ----------------------------------------------------------
+    const CLASES_NIZA = [
+      { n: 1,  t: "Productos químicos para la industria, ciencia, fotografía y agricultura" },
+      { n: 2,  t: "Pinturas, barnices, lacas; productos anticorrosivos" },
+      { n: 3,  t: "Cosméticos, perfumería y productos de limpieza no medicinales" },
+      { n: 4,  t: "Aceites y grasas industriales; lubricantes; combustibles" },
+      { n: 5,  t: "Productos farmacéuticos, veterinarios e higiénicos para uso médico" },
+      { n: 6,  t: "Metales comunes y sus aleaciones; productos de metal" },
+      { n: 7,  t: "Máquinas y máquinas herramienta; motores (no para vehículos terrestres)" },
+      { n: 8,  t: "Herramientas e instrumentos de mano accionados manualmente" },
+      { n: 9,  t: "Aparatos científicos, eléctricos e informáticos; software; celulares" },
+      { n: 10, t: "Aparatos e instrumentos quirúrgicos, médicos y dentales" },
+      { n: 11, t: "Aparatos de alumbrado, calefacción, refrigeración y cocción" },
+      { n: 12, t: "Vehículos; aparatos de locomoción terrestre, aérea o acuática" },
+      { n: 13, t: "Armas de fuego; municiones; explosivos; fuegos artificiales" },
+      { n: 14, t: "Metales preciosos; joyería, bisutería y relojería" },
+      { n: 15, t: "Instrumentos musicales" },
+      { n: 16, t: "Papel y cartón; productos de imprenta; material de oficina" },
+      { n: 17, t: "Caucho, goma y plásticos semielaborados; materiales aislantes" },
+      { n: 18, t: "Cuero e imitaciones; artículos de viaje; bolsos; paraguas" },
+      { n: 19, t: "Materiales de construcción no metálicos" },
+      { n: 20, t: "Muebles, espejos, marcos; productos de madera o plástico" },
+      { n: 21, t: "Utensilios y recipientes para el hogar y la cocina; cristalería" },
+      { n: 22, t: "Cuerdas y cordeles; redes; tiendas de campaña; sacos" },
+      { n: 23, t: "Hilos para uso textil" },
+      { n: 24, t: "Tejidos; ropa de hogar; cortinas" },
+      { n: 25, t: "Prendas de vestir, calzado y artículos de sombrerería" },
+      { n: 26, t: "Encajes, cintas, botones; adornos para el cabello; flores artificiales" },
+      { n: 27, t: "Alfombras, tapetes; revestimientos de suelos; tapices murales" },
+      { n: 28, t: "Juegos y juguetes; artículos de gimnasia y deporte" },
+      { n: 29, t: "Carne, pescado, frutas y verduras en conserva; aceites; leche" },
+      { n: 30, t: "Café, té, cacao; arroz y harinas; pan y pastelería; especias" },
+      { n: 31, t: "Productos agrícolas; animales vivos; frutas y verduras frescas" },
+      { n: 32, t: "Cervezas; aguas minerales; bebidas sin alcohol; jugos" },
+      { n: 33, t: "Bebidas alcohólicas (excepto cervezas)" },
+      { n: 34, t: "Tabaco; artículos para fumadores; cerillas" },
+      { n: 35, t: "Publicidad; gestión y administración de negocios; venta al por menor" },
+      { n: 36, t: "Servicios financieros, bancarios y de seguros; bienes raíces" },
+      { n: 37, t: "Servicios de construcción; reparación; instalación" },
+      { n: 38, t: "Telecomunicaciones" },
+      { n: 39, t: "Transporte; embalaje y almacenamiento; organización de viajes" },
+      { n: 40, t: "Tratamiento de materiales; reciclaje; impresión" },
+      { n: 41, t: "Educación; formación; entretenimiento; actividades deportivas y culturales" },
+      { n: 42, t: "Servicios científicos y tecnológicos; diseño y desarrollo de software" },
+      { n: 43, t: "Servicios de restaurantes y de alimentación; hospedaje temporal" },
+      { n: 44, t: "Servicios médicos y veterinarios; cuidado de belleza; agricultura" },
+      { n: 45, t: "Servicios jurídicos; servicios de seguridad; servicios personales" }
+    ];
+
+    const TITULOS = Object.fromEntries(CLASES_NIZA.map(c => [c.n, c.t]));
+
+    // ----------------------------------------------------------
+    // Palabras clave -> clase (para detectar clases por la descripción)
+    // ----------------------------------------------------------
+    const KEYWORDS_NIZA = {
+      1:  ["quimico", "fertilizante", "abono", "resina", "reactivo", "adhesivo industrial"],
+      2:  ["pintura", "barniz", "esmalte", "laca", "anticorrosivo", "colorante", "tinte"],
+      3:  ["cosmetico", "maquillaje", "perfume", "jabon", "shampoo", "champu", "crema", "locion", "desodorante", "labial", "belleza", "limpieza", "detergente", "fragancia"],
+      4:  ["combustible", "gasolina", "lubricante", "aceite industrial", "vela", "cera", "grasa"],
+      5:  ["medicamento", "farmaceutico", "farmaco", "medicina", "suplemento", "vitamina", "pastilla", "venda", "desinfectante", "higienico"],
+      6:  ["metal", "acero", "aluminio", "hierro", "tornillo", "cerradura", "candado", "herreria", "clavo"],
+      7:  ["maquina", "maquinaria", "motor", "bomba", "generador", "compresor", "herramienta electrica", "taladro"],
+      8:  ["cubierto", "cuchillo", "tijera", "navaja", "rasuradora", "herramienta manual", "pinza"],
+      9:  ["software", "aplicacion", "programa", "computadora", "celular", "telefono", "electronico", "bateria", "audifono", "cargador", "lente", "camara", "sensor", "app"],
+      10: ["aparato medico", "instrumento quirurgico", "protesis", "silla de ruedas", "condon", "jeringa", "termometro"],
+      11: ["lampara", "iluminacion", "foco", "calentador", "refrigerador", "estufa", "horno", "aire acondicionado", "sanitario", "ventilador"],
+      12: ["vehiculo", "automovil", "coche", "carro", "bicicleta", "moto", "motocicleta", "llanta", "autoparte", "camion"],
+      13: ["arma", "municion", "pirotecnia", "fuego artificial", "explosivo", "cartucho"],
+      14: ["joya", "joyeria", "anillo", "collar", "reloj", "oro", "plata", "bisuteria", "arete", "pulsera", "diamante"],
+      15: ["instrumento musical", "guitarra", "piano", "violin", "tambor"],
+      16: ["papel", "libro", "revista", "cuaderno", "imprenta", "papeleria", "folleto", "carton", "libreta", "poster"],
+      17: ["hule", "caucho", "manguera", "aislante", "empaque de plastico"],
+      18: ["bolso", "cartera", "mochila", "maleta", "piel", "cuero", "paraguas", "billetera", "morral"],
+      19: ["cemento", "concreto", "ladrillo", "tabique", "material de construccion", "grava", "yeso"],
+      20: ["mueble", "silla", "mesa", "cama", "colchon", "sofa", "closet", "escritorio"],
+      21: ["vaso", "taza", "plato", "sarten", "olla", "utensilio", "cristaleria", "cepillo", "termo", "botella"],
+      22: ["cuerda", "cordel", "lona", "costal", "saco"],
+      23: ["hilo", "hilado", "estambre"],
+      24: ["sabana", "toalla", "cortina", "mantel", "tela", "edredon", "cobija"],
+      25: ["ropa", "prenda", "camiseta", "camisa", "pantalon", "vestido", "zapato", "calzado", "tenis", "gorra", "sombrero", "chamarra", "playera", "sudadera", "calcetin", "blusa", "falda", "chaqueta", "traje", "moda"],
+      26: ["boton", "encaje", "cierre", "liston", "broche", "aguja"],
+      27: ["alfombra", "tapete", "tapiz", "linoleo"],
+      28: ["juguete", "juego", "pelota", "balon", "peluche", "videojuego", "consola", "articulo deportivo", "muneca"],
+      29: ["carne", "pescado", "pollo", "queso", "leche", "lacteo", "yogurt", "embutido", "jamon", "mermelada", "conserva", "aceite comestible", "botana"],
+      30: ["cafe", "te", "chocolate", "pan", "panaderia", "pastel", "pasteleria", "galleta", "harina", "arroz", "pasta", "salsa", "especia", "miel", "azucar", "cereal", "tortilla", "reposteria", "dulce"],
+      31: ["fruta fresca", "verdura", "vegetal", "semilla", "planta", "flor natural", "alimento para mascota", "grano", "agricola"],
+      32: ["cerveza", "agua", "refresco", "jugo", "bebida sin alcohol", "soda", "energizante"],
+      33: ["vino", "tequila", "mezcal", "licor", "ron", "whisky", "vodka", "bebida alcoholica", "destilado", "ginebra"],
+      34: ["tabaco", "cigarro", "cigarrillo", "vapeador", "encendedor", "puro"],
+      35: ["publicidad", "marketing", "mercadotecnia", "venta", "tienda", "comercio", "ecommerce", "comercio electronico", "administracion", "negocio", "consultoria"],
+      36: ["financiero", "banco", "seguro", "inversion", "bienes raices", "inmobiliaria", "prestamo", "credito", "fintech", "hipoteca"],
+      37: ["construccion", "reparacion", "mantenimiento", "instalacion", "plomeria", "albanileria", "remodelacion"],
+      38: ["telecomunicacion", "telefonia", "transmision", "internet", "streaming"],
+      39: ["transporte", "logistica", "envio", "paqueteria", "mudanza", "almacenamiento", "viaje", "turismo", "agencia de viajes", "distribucion"],
+      40: ["reciclaje", "impresion", "maquila", "soldadura", "costura", "bordado", "sublimacion"],
+      41: ["educacion", "curso", "capacitacion", "ensenanza", "escuela", "entretenimiento", "evento", "gimnasio", "taller", "academia", "editorial"],
+      42: ["desarrollo de software", "programacion", "diseno web", "tecnologia", "ingenieria", "investigacion", "plataforma", "hosting", "aplicacion web", "ciberseguridad"],
+      43: ["restaurante", "cafeteria", "bar", "catering", "hotel", "hospedaje", "hostal", "fonda", "taqueria", "banquete", "cocina"],
+      44: ["clinica", "medico", "consultorio", "dentista", "spa", "estetica", "salon de belleza", "peluqueria", "masaje", "veterinaria", "nutricion"],
+      45: ["legal", "juridico", "abogado", "notaria", "seguridad", "vigilancia", "tramite", "funerario"]
+    };
+
+    // ----------------------------------------------------------
+    // Clases relacionadas (coordinadas): las que suelen registrarse
+    // junto con una clase dada. Sirve para sugerir "todas las relacionadas".
+    // ----------------------------------------------------------
+    const RELACIONADAS = {
+      1:  [2, 4, 5, 17],
+      2:  [1, 17, 19],
+      3:  [5, 44, 21, 35],
+      4:  [1, 7, 12],
+      5:  [3, 10, 44, 35],
+      6:  [7, 19, 20],
+      7:  [8, 9, 12, 11],
+      8:  [7, 21],
+      9:  [42, 38, 28, 35],
+      10: [5, 44, 35],
+      11: [7, 20, 21],
+      12: [4, 7, 37, 35],
+      13: [28],
+      14: [25, 18, 26, 35],
+      15: [9, 28],
+      16: [9, 28, 41, 35],
+      17: [1, 2, 19],
+      18: [25, 14, 26, 35],
+      19: [6, 2, 37],
+      20: [21, 24, 11, 6],
+      21: [3, 11, 20, 8],
+      22: [23, 24],
+      23: [22, 24, 26],
+      24: [25, 20, 22, 27],
+      25: [18, 14, 26, 24, 35],
+      26: [25, 23, 24],
+      27: [24, 19, 20],
+      28: [25, 9, 16, 41],
+      29: [30, 31, 32, 43, 35],
+      30: [29, 31, 32, 43, 35],
+      31: [29, 30, 32, 44],
+      32: [29, 30, 33, 43, 35],
+      33: [32, 43, 35],
+      34: [35],
+      35: [],
+      36: [35, 45, 16],
+      37: [19, 6, 42],
+      38: [9, 42, 41],
+      39: [35, 12],
+      40: [37, 17, 1],
+      41: [16, 9, 28, 35],
+      42: [9, 38, 35],
+      43: [29, 30, 32, 33, 35],
+      44: [3, 5, 10, 35],
+      45: [36, 35]
+    };
+
+    // ----------------------------------------------------------
+    // Cobertura sugerida: productos/servicios típicos por clase,
+    // para llenar la descripción de la solicitud de marca ante el IMPI.
+    // ----------------------------------------------------------
+    const COBERTURA = {
+      1: ["Productos químicos para la industria y la ciencia", "Abonos y fertilizantes", "Resinas artificiales en bruto", "Adhesivos para la industria", "Reactivos químicos no para uso médico", "Composiciones para extinguir incendios"],
+      2: ["Pinturas", "Barnices", "Lacas", "Productos antioxidantes y para preservar la madera", "Colorantes y tintes", "Tintas para impresión", "Diluyentes para pinturas"],
+      3: ["Cosméticos", "Maquillaje", "Perfumes y aguas de tocador", "Jabones", "Champús y acondicionadores", "Cremas y lociones para la piel", "Desodorantes de uso personal", "Dentífricos", "Productos de limpieza no medicinales", "Aceites esenciales"],
+      4: ["Aceites y grasas industriales", "Lubricantes", "Combustibles y carburantes", "Velas", "Ceras", "Productos para absorber y asentar el polvo"],
+      5: ["Productos farmacéuticos y medicamentos para uso humano", "Suplementos alimenticios y vitaminas", "Productos higiénicos para uso médico", "Desinfectantes", "Productos veterinarios", "Alimentos para bebés", "Apósitos y material para curaciones", "Productos para eliminar plagas y parásitos"],
+      6: ["Metales comunes y sus aleaciones", "Materiales de construcción metálicos", "Cerrajería y herrajes metálicos", "Tornillos, clavos y tuercas de metal", "Tuberías y tubos metálicos", "Cajas de caudales", "Candados y cerraduras de metal"],
+      7: ["Máquinas y máquinas herramienta", "Motores (excepto para vehículos terrestres)", "Bombas y compresores (máquinas)", "Generadores de electricidad", "Maquinaria agrícola e industrial", "Herramientas eléctricas", "Robots industriales"],
+      8: ["Herramientas e instrumentos de mano accionados manualmente", "Cuchillería", "Cubiertos (cuchillos, tenedores y cucharas)", "Maquinillas y rastrillos de afeitar", "Tijeras", "Pinzas y desarmadores"],
+      9: ["Software y aplicaciones informáticas descargables", "Computadoras y sus periféricos", "Teléfonos móviles y sus accesorios", "Audífonos y bocinas", "Baterías y cargadores", "Aparatos para grabar, transmitir o reproducir sonido o imágenes", "Gafas, lentes y sus estuches", "Publicaciones electrónicas descargables", "Cámaras y equipo fotográfico"],
+      10: ["Aparatos e instrumentos quirúrgicos y médicos", "Aparatos de diagnóstico para uso médico", "Prótesis y órtesis", "Material de sutura", "Aparatos de masaje", "Mobiliario especial para uso médico", "Preservativos"],
+      11: ["Aparatos de alumbrado, lámparas y luminarias", "Aparatos de calefacción", "Aparatos de refrigeración y congelación", "Estufas, hornos y parrillas", "Aparatos de aire acondicionado y ventilación", "Instalaciones sanitarias", "Aparatos de cocción de alimentos"],
+      12: ["Vehículos automotores", "Motocicletas", "Bicicletas", "Neumáticos, llantas y cámaras", "Partes, refacciones y accesorios para vehículos", "Vehículos eléctricos", "Embarcaciones y aeronaves"],
+      13: ["Armas de fuego", "Municiones y proyectiles", "Explosivos", "Fuegos artificiales y pirotecnia"],
+      14: ["Metales preciosos y sus aleaciones", "Artículos de joyería", "Piedras preciosas y semipreciosas", "Relojes e instrumentos cronométricos", "Bisutería", "Llaveros y dijes de fantasía", "Estuches para relojes y joyas"],
+      15: ["Instrumentos musicales", "Guitarras y pianos", "Instrumentos de viento, cuerda y percusión", "Atriles y estuches para instrumentos musicales", "Cuerdas y accesorios para instrumentos musicales"],
+      16: ["Papel y cartón", "Productos de imprenta", "Libros, revistas y publicaciones impresas", "Material de oficina y papelería (excepto muebles)", "Material de embalaje de papel o cartón", "Fotografías y carteles", "Material didáctico y de enseñanza impreso"],
+      17: ["Caucho, gutapercha y goma", "Materias plásticas semielaboradas", "Materiales aislantes (térmicos, acústicos y eléctricos)", "Mangueras y tubos flexibles no metálicos", "Juntas, empaques y selladores"],
+      18: ["Cuero y cuero de imitación", "Bolsos, bolsas de mano y carteras", "Monederos y billeteras", "Mochilas", "Maletas y artículos de viaje", "Paraguas y sombrillas", "Artículos de talabartería y correas"],
+      19: ["Materiales de construcción no metálicos", "Cemento, cal y yeso", "Concreto y mortero", "Tabiques, ladrillos y bloques", "Vidrio y cristales para la construcción", "Madera para construcción", "Tubos y tuberías no metálicos para la construcción"],
+      20: ["Muebles", "Espejos y marcos", "Colchones, bases y almohadas", "Muebles de oficina", "Productos de madera, corcho, mimbre o plástico", "Mobiliario para el hogar y exteriores"],
+      21: ["Utensilios y recipientes para el hogar y la cocina", "Cristalería, porcelana y loza", "Vasos, tazas, platos y cubiertos desechables", "Sartenes, ollas y moldes (no eléctricos)", "Cepillos y artículos de limpieza", "Botellas, termos y recipientes para bebidas"],
+      22: ["Cuerdas y cordeles", "Redes", "Tiendas de campaña, toldos y lonas", "Sacos y costales para transportar mercancías", "Materias textiles fibrosas en bruto"],
+      23: ["Hilos para uso textil", "Hilados de algodón, lana o fibras sintéticas", "Hilo de coser y de bordar"],
+      24: ["Tejidos y productos textiles para el hogar", "Ropa de cama y de mesa", "Cortinas de materias textiles", "Mantas, cobijas y edredones", "Toallas de materias textiles", "Fundas para cojines y almohadas"],
+      25: ["Prendas de vestir", "Camisetas, camisas y blusas", "Pantalones, faldas y vestidos", "Calzado, tenis y zapatos", "Sombrerería, gorras y sombreros", "Ropa interior y de dormir", "Chamarras, abrigos y sudaderas", "Calcetines, medias y accesorios de vestir"],
+      26: ["Encajes, cintas y bordados", "Botones, broches y hebillas", "Cierres (cremalleras)", "Agujas y alfileres", "Adornos y accesorios para el cabello", "Flores y frutas artificiales"],
+      27: ["Alfombras y tapetes", "Esteras y linóleo", "Revestimientos para suelos", "Tapices murales que no sean de materias textiles", "Pasto y césped artificial"],
+      28: ["Juegos y juguetes", "Juegos de mesa, de cartas y de naipes", "Juguetes electrónicos e interactivos", "Aparatos para videojuegos y consolas", "Artículos y aparatos de gimnasia y deporte", "Muñecos, peluches y figuras de acción", "Rompecabezas y juegos de construcción", "Adornos para árboles de Navidad"],
+      29: ["Carne, pescado, aves y caza", "Frutas y verduras en conserva, congeladas, secas o cocidas", "Leche, quesos y productos lácteos", "Aceites y grasas comestibles", "Embutidos y carnes frías", "Mermeladas, jaleas y compotas", "Huevos", "Botanas y frutos secos preparados"],
+      30: ["Café, té, cacao y sus sucedáneos", "Arroz, pastas, fideos y harinas", "Pan, productos de pastelería y confitería", "Galletas y bizcochos", "Chocolate, dulces y golosinas", "Helados y nieves", "Azúcar, miel y edulcorantes", "Especias, condimentos y salsas"],
+      31: ["Productos agrícolas y hortícolas frescos", "Frutas y verduras frescas", "Semillas, granos y cereales sin procesar", "Plantas y flores naturales", "Animales vivos", "Alimentos y bebidas para animales"],
+      32: ["Cervezas", "Aguas minerales y gaseosas", "Bebidas sin alcohol", "Jugos y bebidas a base de frutas", "Refrescos", "Bebidas energéticas e isotónicas", "Siropes y preparaciones para elaborar bebidas"],
+      33: ["Bebidas alcohólicas (excepto cervezas)", "Vinos", "Tequila y mezcal", "Licores y destilados", "Ron, vodka, ginebra y whisky", "Bebidas alcohólicas premezcladas"],
+      34: ["Tabaco y productos de tabaco", "Cigarros, cigarrillos y puros", "Artículos para fumadores", "Encendedores y cerillos", "Cigarrillos electrónicos, vaporizadores y sus recargas"],
+      35: ["Publicidad y difusión de anuncios", "Gestión, organización y administración de negocios", "Venta al por menor y al por mayor (en tienda y en línea)", "Servicios de comercio electrónico", "Importación y exportación", "Marketing, mercadotecnia y promoción de ventas", "Administración de programas de lealtad y fidelización", "Consultoría en administración de empresas"],
+      36: ["Servicios financieros y monetarios", "Servicios bancarios", "Seguros y reaseguros", "Servicios inmobiliarios", "Préstamos, créditos y financiamiento", "Servicios de inversión", "Procesamiento de pagos y transferencias"],
+      37: ["Servicios de construcción", "Reparación y mantenimiento", "Servicios de instalación", "Servicios de plomería, electricidad y pintura", "Remodelación y acondicionamiento de inmuebles", "Mantenimiento y reparación de vehículos"],
+      38: ["Servicios de telecomunicaciones", "Servicios de telefonía fija y móvil", "Transmisión de datos, voz, imágenes y video", "Servicios de acceso a Internet", "Transmisión de contenidos por streaming", "Servicios de mensajería electrónica"],
+      39: ["Transporte de personas y mercancías", "Logística y distribución", "Embalaje y almacenamiento de mercancías", "Servicios de mensajería y paquetería", "Organización de viajes y turismo", "Servicios de mudanza"],
+      40: ["Tratamiento y transformación de materiales", "Servicios de impresión y serigrafía", "Reciclaje y tratamiento de residuos", "Confección y maquila de prendas a medida", "Servicios de soldadura y corte", "Personalización y grabado de productos"],
+      41: ["Servicios de educación y formación", "Organización de cursos, talleres y seminarios", "Servicios de entretenimiento", "Producción y organización de espectáculos y eventos", "Servicios de gimnasio y actividades deportivas", "Publicación de textos y contenidos (no publicitarios)", "Servicios de edición y producción digital"],
+      42: ["Diseño y desarrollo de software", "Desarrollo de aplicaciones y plataformas", "Software como servicio (SaaS)", "Diseño y alojamiento de páginas web (hosting)", "Servicios de ciberseguridad", "Servicios científicos y tecnológicos de investigación", "Diseño industrial y gráfico"],
+      43: ["Servicios de restaurantes", "Servicios de cafetería y bar", "Servicios de comida para llevar y a domicilio", "Servicios de banquetes y catering", "Hospedaje temporal y servicios de hotel", "Reservación de alojamiento"],
+      44: ["Servicios médicos y de clínicas", "Servicios odontológicos", "Servicios de salones de belleza y estética", "Servicios de spa y cuidado personal", "Servicios veterinarios", "Servicios de nutrición y asesoría en salud", "Servicios de jardinería y paisajismo"],
+      45: ["Servicios jurídicos", "Servicios de seguridad para la protección de bienes y personas", "Servicios de investigación e indagación legal", "Trámites, gestoría y licencias", "Servicios funerarios", "Servicios personales y sociales prestados por terceros"]
+    };
+
+    // Quita acentos y pasa a minúsculas para comparar sin errores
+    function normaliza(s) {
+      return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    }
+
+    // Devuelve TODAS las clases con coincidencia (ordenadas por número de coincidencias)
+    function clasesConCoincidencia(texto) {
+      const t = normaliza(texto);
+      const puntajes = [];
+      for (const num in KEYWORDS_NIZA) {
+        let score = 0;
+        for (const kw of KEYWORDS_NIZA[num]) {
+          const k = normaliza(kw).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          if (new RegExp("\\b" + k + "(es|s)?\\b").test(t)) score++;
+        }
+        if (score > 0) puntajes.push({ n: Number(num), score: score });
+      }
+      puntajes.sort((a, b) => b.score - a.score || a.n - b.n);
+      return puntajes;
+    }
+
+    // A partir de las clases directas, junta sus clases relacionadas
+    function clasesRelacionadas(setDirectas) {
+      const r = new Set();
+      setDirectas.forEach(n => (RELACIONADAS[n] || []).forEach(m => {
+        if (!setDirectas.has(m)) r.add(m);
+      }));
+      return [...r].sort((a, b) => a - b);
+    }
+
+    // Estado de la búsqueda en curso
+    const estado = { marca: "", productos: "", directas: [], relacionadas: [], seleccion: new Set() };
+
+    const form = document.getElementById("formBusqueda");
+    const errorMsg = document.getElementById("errorMsg");
+    const resultado = document.getElementById("resultado");
+
+    // ----------------------------------------------------------
+    // Enviar formulario -> validar y mostrar el menú de selección
+    // ----------------------------------------------------------
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const marca = document.getElementById("marca").value.trim();
+      const productos = document.getElementById("productos").value.trim();
+
+      if (!marca) {
+        errorMsg.textContent = "⚠️ Escribe la marca que quieres registrar.";
+        document.getElementById("marca").focus();
+        return;
+      }
+      if (!productos) {
+        errorMsg.textContent = "⚠️ Describe los productos o servicios que quieres proteger.";
+        document.getElementById("productos").focus();
+        return;
+      }
+      errorMsg.textContent = "";
+
+      estado.marca = marca;
+      estado.productos = productos;
+      const dir = clasesConCoincidencia(productos);
+      estado.directas = dir.map(d => d.n);
+      const setDir = new Set(estado.directas);
+      estado.relacionadas = clasesRelacionadas(setDir);
+      estado.seleccion = new Set(estado.directas); // las directas vienen pre-seleccionadas
+
+      renderSeleccion();
+    });
+
+    // Construye una fila de clase con casilla (checkbox)
+    function filaClase(n, badge) {
+      const checked = estado.seleccion.has(n) ? "checked" : "";
+      const activa = estado.seleccion.has(n) ? " activa" : "";
+      const tag = badge ? '<span class="tag tag-' + badge.tipo + '">' + badge.texto + '</span>' : "";
+      return '<label class="clase-item' + activa + '">' +
+        '<input type="checkbox" value="' + n + '" ' + checked + '>' +
+        '<span><span class="cnum">Clase ' + n + '</span> — ' + escapeHtml(TITULOS[n]) + ' ' + tag + '</span>' +
+      '</label>';
+    }
+
+    // Conecta las casillas para que actualicen la selección
+    function conectarCasillas(contenedor) {
+      contenedor.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener("change", () => {
+          const n = Number(chk.value);
+          if (chk.checked) estado.seleccion.add(n); else estado.seleccion.delete(n);
+          chk.closest(".clase-item").classList.toggle("activa", chk.checked);
+          actualizarContador();
+        });
+      });
+    }
+
+    function actualizarContador() {
+      const el = document.getElementById("contadorSel");
+      if (!el) return;
+      const n = estado.seleccion.size;
+      el.textContent = n === 0 ? "Ninguna clase seleccionada"
+        : (n === 1 ? "1 clase seleccionada" : n + " clases seleccionadas");
+      const err = document.getElementById("errorSel");
+      if (err && n > 0) err.textContent = "";
+    }
+
+    // ----------------------------------------------------------
+    // PASO 1: menú para elegir entre las clases sugeridas + relacionadas
+    // ----------------------------------------------------------
+    function renderSeleccion() {
+      const dir = estado.directas;
+      const rel = estado.relacionadas;
+      const sugeridasSet = new Set([...dir, ...rel]);
+      const otras = CLASES_NIZA.map(c => c.n).filter(n => !sugeridasSet.has(n));
+      const hayOtrasSeleccionadas = otras.some(n => estado.seleccion.has(n));
+      const sinSugerencias = dir.length === 0 && rel.length === 0;
+
+      let sugHtml = "";
+      if (!sinSugerencias) {
+        sugHtml += dir.map(n => filaClase(n, { tipo: "dir", texto: "sugerida" })).join("");
+        sugHtml += rel.map(n => filaClase(n, { tipo: "rel", texto: "relacionada" })).join("");
+      } else {
+        sugHtml = '<p class="nota">No detectamos una clase automáticamente a partir de tu descripción. Elige la clase manualmente en la lista de abajo.</p>';
+      }
+
+      const mostrarOtras = sinSugerencias || hayOtrasSeleccionadas;
+
+      resultado.innerHTML =
+        '<div class="resumen">' +
+          '<span class="ok-badge">Paso 1 de 2 · Elige las clases</span>' +
+          '<h3>Marca a buscar</h3>' +
+          '<div class="marca-grande">' + escapeHtml(estado.marca) + '</div>' +
+          '<div class="bloque">' +
+            '<h3>Productos o servicios</h3>' +
+            '<p>' + escapeHtml(estado.productos) + '</p>' +
+          '</div>' +
+          '<div class="bloque">' +
+            '<h3>📌 Clases sugeridas — elige en cuáles buscar</h3>' +
+            '<p class="nota" style="margin-bottom:12px;">En verde, las <strong>sugeridas</strong> por tu descripción (ya vienen marcadas). En amarillo, las <strong>relacionadas</strong> que suelen registrarse junto con ellas. Marca o desmarca las que quieras.</p>' +
+            '<div class="clases-lista">' + sugHtml + '</div>' +
+            '<button type="button" class="toggle-todas" id="toggleTodas">➕ ' +
+              (sinSugerencias ? "Elegir clase manualmente" : "¿Falta alguna? Ver las demás clases") +
+            '</button>' +
+            '<div id="otrasWrap" style="margin-top:12px;' + (mostrarOtras ? "" : "display:none;") + '">' +
+              '<input type="text" id="filtroOtras" placeholder="🔎 Filtrar… (ej. ropa, software, comida)" autocomplete="off" />' +
+              '<div class="clases-lista" id="listaOtras" style="margin-top:10px;">' +
+                otras.map(n => filaClase(n, null)).join("") +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="barra-sel">' +
+            '<span class="contador" id="contadorSel"></span>' +
+            '<button type="button" class="btn-continuar" id="btnContinuar">Continuar →</button>' +
+          '</div>' +
+          '<p class="error-msg" id="errorSel"></p>' +
+        '</div>';
+
+      // Conectar casillas (sugeridas + otras)
+      conectarCasillas(resultado);
+
+      // Botón mostrar/ocultar las demás clases
+      document.getElementById("toggleTodas").addEventListener("click", () => {
+        const w = document.getElementById("otrasWrap");
+        w.style.display = (w.style.display === "none") ? "" : "none";
+      });
+
+      // Filtro de las demás clases
+      const filtroOtras = document.getElementById("filtroOtras");
+      filtroOtras.addEventListener("input", e => filtrarOtras(e.target.value, otras));
+
+      // Continuar al paso 2
+      document.getElementById("btnContinuar").addEventListener("click", () => {
+        if (estado.seleccion.size === 0) {
+          document.getElementById("errorSel").textContent = "⚠️ Selecciona al menos una clase para continuar.";
+          return;
+        }
+        renderFinal();
+      });
+
+      actualizarContador();
+      resultado.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function filtrarOtras(filtro, otras) {
+      const f = normaliza(filtro);
+      const cont = document.getElementById("listaOtras");
+      const visibles = otras.filter(n =>
+        !f || normaliza(TITULOS[n]).includes(f) || String(n) === f || ("clase " + n).includes(f)
+      );
+      cont.innerHTML = visibles.length
+        ? visibles.map(n => filaClase(n, null)).join("")
+        : '<p style="padding:14px;color:#64748b;font-size:14px;">Sin coincidencias.</p>';
+      conectarCasillas(cont);
+    }
+
+    // ----------------------------------------------------------
+    // PASO 2: búsqueda final con las clases elegidas
+    // ----------------------------------------------------------
+    function renderFinal() {
+      const elegidas = [...estado.seleccion].sort((a, b) => a - b);
+      const listaTit = '<ul class="sugerencias">' +
+        elegidas.map(n => '<li><span class="cnum">Clase ' + n + '</span> — ' + escapeHtml(TITULOS[n]) + '</li>').join("") +
+        '</ul>';
+
+      const cobHtml = elegidas.map(n => {
+        const items = COBERTURA[n] || [];
+        const lis = items.length
+          ? items.map(it => '<label class="cob-item"><input type="checkbox" data-c="' + n + '" checked>' + escapeHtml(it) + '</label>').join("")
+          : '<p class="nota">Sin lista sugerida para esta clase.</p>';
+        return '<div class="cob-clase">' +
+          '<div class="cob-head"><span class="cnum">Clase ' + n + '</span> — ' + escapeHtml(TITULOS[n]) + '</div>' +
+          '<div class="cob-lista">' + lis + '</div>' +
+          '<button type="button" class="btn-mini cob-copy" data-c="' + n + '">📋 Copiar Clase ' + n + '</button>' +
+        '</div>';
+      }).join("");
+
+      resultado.innerHTML =
+        '<div class="resumen">' +
+          '<button type="button" class="btn-volver" id="btnVolver">← Cambiar clases</button>' +
+          '<span class="ok-badge">✓ Paso 2 de 2 · Búsqueda lista</span>' +
+          '<h3>Marca a buscar</h3>' +
+          '<div class="marca-grande">' + escapeHtml(estado.marca) + '</div>' +
+          '<div class="bloque">' +
+            '<h3>Clases en las que buscarás (' + elegidas.length + ')</h3>' +
+            listaTit +
+          '</div>' +
+          '<div class="bloque">' +
+            '<h3>📝 Cobertura sugerida para tu solicitud</h3>' +
+            '<p class="nota" style="margin-bottom:12px;">Productos/servicios recomendados para reclamar en cada clase ante el IMPI. Desmarca lo que no apliques y copia la lista para la descripción de tu solicitud. <strong>Tip:</strong> reclamar más productos dentro de una misma clase no cuesta extra.</p>' +
+            cobHtml +
+          '</div>' +
+          '<div class="impi-box">' +
+            '<h3>🔎 Paso A · Búsqueda oficial en el IMPI</h3>' +
+            '<p class="instr-impi">Abre el buscador fonético del IMPI y busca <strong>' + escapeHtml(estado.marca) + '</strong> en cada clase de la lista de arriba. (Al hacer clic copiamos tu marca al portapapeles.)</p>' +
+            '<div class="impi-btns">' +
+              '<button type="button" class="btn-impi" data-url="https://acervomarcas.impi.gob.mx:8181/marcanet/vistas/common/datos/bsqFoneticaCompleta.pgi">🔤 Abrir búsqueda fonética</button>' +
+              '<button type="button" class="btn-impi sec" data-url="https://marcanet.impi.gob.mx/marcanet/">📄 Consultar estatus (Marcanet)</button>' +
+            '</div>' +
+            '<p class="copia-ok" id="copiaOk"></p>' +
+            '<div id="impiLink"></div>' +
+          '</div>' +
+          '<div class="anexar-box">' +
+            '<h3>📎 Paso B · Anexa aquí tu búsqueda del IMPI</h3>' +
+            '<p class="instr-impi">¿Ya hiciste la búsqueda en el IMPI? Sube el archivo que descargaste (PDF, captura…) o pega el listado de resultados. Con eso se analizan las anterioridades y su vigencia.</p>' +
+            '<input type="file" id="archivoImpi" accept=".pdf,.csv,.txt,.html,.htm,image/*" />' +
+            '<textarea id="pegaImpi" placeholder="…o pega aquí el texto de los resultados del IMPI"></textarea>' +
+            '<button type="button" class="btn-anexar" id="btnAnexar">Anexar resultados</button>' +
+            '<p class="copia-ok" id="anexoOk"></p>' +
+          '</div>' +
+          '<div class="dash-box">' +
+            '<h3>📊 Tablero de resultados</h3>' +
+            '<p class="instr-impi">Captura los números de tu análisis; la app calcula la probabilidad de registro según la práctica del IMPI.</p>' +
+            '<div class="dash-inputs">' +
+              '<label>Marcas arrojadas por la búsqueda<input type="number" id="dTotal" min="0" value="289"></label>' +
+              '<label>Marcas relevantes<input type="number" id="dRelev" min="0" value="5"></label>' +
+              '<label>Revisadas a profundidad<input type="number" id="dRev" min="0" value="5"></label>' +
+              '<label>Obstáculos reales (vigentes que oponen)<input type="number" id="dObst" min="0" value="0"></label>' +
+            '</div>' +
+            '<button type="button" class="btn-continuar" id="btnDash">Actualizar tablero</button>' +
+            '<div class="dash-cards">' +
+              '<div class="dash-card"><div class="dash-num" id="cTotal">—</div><div class="dash-lbl">🔍 Arrojadas</div></div>' +
+              '<div class="dash-card"><div class="dash-num" id="cRelev">—</div><div class="dash-lbl">🎯 Relevantes</div></div>' +
+              '<div class="dash-card"><div class="dash-num" id="cRev">—</div><div class="dash-lbl">🔬 Revisadas a fondo</div></div>' +
+            '</div>' +
+            '<div class="dash-gauge">' +
+              '<svg width="180" height="180" viewBox="0 0 180 180">' +
+                '<circle cx="90" cy="90" r="70" fill="none" stroke="#e2e8f0" stroke-width="18"></circle>' +
+                '<circle id="dArc" cx="90" cy="90" r="70" fill="none" stroke="#16a34a" stroke-width="18" stroke-linecap="round" stroke-dasharray="439.82" stroke-dashoffset="439.82" transform="rotate(-90 90 90)"></circle>' +
+                '<text id="dPct" x="90" y="100" text-anchor="middle" font-size="36" font-weight="800" fill="#1e293b">0%</text>' +
+              '</svg>' +
+              '<div class="dash-verdict" id="dVerdict"></div>' +
+              '<p class="dash-note">Probabilidad estimada según las anterioridades vigentes encontradas (criterio orientativo, no oficial).</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+      document.getElementById("btnVolver").addEventListener("click", renderSeleccion);
+
+      // Botones para copiar la cobertura de cada clase
+      resultado.querySelectorAll(".cob-copy").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const n = btn.dataset.c;
+          const items = [...resultado.querySelectorAll('.cob-item input[data-c="' + n + '"]')]
+            .filter(c => c.checked)
+            .map(c => c.parentElement.textContent.trim());
+          if (!items.length) { btn.textContent = "Marca al menos un producto"; return; }
+          const texto = "Clase " + n + ": " + items.join("; ") + ".";
+          navigator.clipboard.writeText(texto).then(() => {
+            btn.textContent = "✓ Copiado (Clase " + n + ")";
+          }).catch(() => {
+            btn.textContent = "No se pudo copiar";
+          });
+        });
+      });
+
+      resultado.querySelectorAll(".btn-impi").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const url = btn.dataset.url;
+          const copiaEl = document.getElementById("copiaOk");
+          const linkEl = document.getElementById("impiLink");
+          navigator.clipboard.writeText(estado.marca).then(() => {
+            copiaEl.textContent = "✓ Copiamos «" + estado.marca + "» al portapapeles.";
+          }).catch(() => {
+            copiaEl.textContent = "Tu marca: " + estado.marca;
+          });
+          if (linkEl) {
+            linkEl.innerHTML = '<p class="instr-impi" style="margin:10px 0 4px;">Si no se abre solo (p. ej. dentro de esta vista previa), copia y abre este enlace en tu navegador:</p>' +
+              '<a class="impi-url" href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
+          }
+          try { window.open(url, "_blank", "noopener"); } catch (e) {}
+        });
+      });
+
+      // Botón "Anexar resultados del IMPI"
+      const btnAnexar = document.getElementById("btnAnexar");
+      if (btnAnexar) {
+        btnAnexar.addEventListener("click", () => {
+          const f = document.getElementById("archivoImpi");
+          const t = document.getElementById("pegaImpi");
+          const okEl = document.getElementById("anexoOk");
+          const tieneArchivo = f && f.files && f.files.length > 0;
+          const tieneTexto = t && t.value.trim().length > 0;
+          if (!tieneArchivo && !tieneTexto) {
+            okEl.style.color = "#dc2626";
+            okEl.textContent = "Primero sube un archivo o pega el texto de tu búsqueda.";
+            return;
+          }
+          okEl.style.color = "";
+          const partes = [];
+          if (tieneArchivo) partes.push("archivo «" + f.files[0].name + "»");
+          if (tieneTexto) partes.push(t.value.trim().length + " caracteres de texto");
+          okEl.textContent = "✓ Recibido: " + partes.join(" + ") + ". Para el dictamen, compárteme esto en el chat y te devuelvo el análisis de anterioridades y vigencia.";
+        });
+      }
+
+      // Tablero / dashboard
+      const dashBtn = document.getElementById("btnDash");
+      if (dashBtn) {
+        dashBtn.addEventListener("click", renderDash);
+        ["dTotal", "dRelev", "dRev", "dObst"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.addEventListener("input", renderDash);
+        });
+        renderDash();
+      }
+
+      resultado.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // Calcula y dibuja el tablero: estadísticas + medidor de probabilidad de registro
+    function renderDash() {
+      const g = id => document.getElementById(id);
+      const total = +(g("dTotal") && g("dTotal").value) || 0;
+      const relev = +(g("dRelev") && g("dRelev").value) || 0;
+      const rev = +(g("dRev") && g("dRev").value) || 0;
+      const obst = +(g("dObst") && g("dObst").value) || 0;
+      if (g("cTotal")) g("cTotal").textContent = total;
+      if (g("cRelev")) g("cRelev").textContent = relev;
+      if (g("cRev")) g("cRev").textContent = rev;
+
+      // Heurística orientativa: cada anterioridad VIGENTE que opone baja mucho la probabilidad;
+      // las relevantes que no oponen (en trámite/caducas) bajan poco.
+      let p = 92 - obst * 38 - Math.max(0, relev - obst) * 2;
+      p = Math.max(5, Math.min(95, p));
+
+      let color, label;
+      if (p >= 70) { color = "#16a34a"; label = "Probabilidad ALTA"; }
+      else if (p >= 40) { color = "#d97706"; label = "Probabilidad MEDIA"; }
+      else { color = "#dc2626"; label = "Probabilidad BAJA"; }
+
+      const C = 439.82; // circunferencia (2·π·70)
+      const arc = g("dArc");
+      if (arc) {
+        arc.style.strokeDashoffset = (C * (1 - p / 100)).toFixed(1);
+        arc.setAttribute("stroke", color);
+      }
+      if (g("dPct")) { g("dPct").textContent = Math.round(p) + "%"; g("dPct").setAttribute("fill", color); }
+      if (g("dVerdict")) { g("dVerdict").textContent = label + " de registro"; g("dVerdict").style.color = color; }
+    }
+
+    // Evita que el texto del usuario rompa el HTML
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, c => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+      ));
+    }
+  </script>
+</body>
+</html>
