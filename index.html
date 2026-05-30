@@ -303,6 +303,13 @@
     .btn-mini { background: var(--primary-light); color: var(--primary-dark); border: none; border-radius: 8px; padding: 8px 14px; font-size: 13.5px; font-weight: 650; cursor: pointer; font-family: inherit; }
     .btn-mini:hover { background: #e0e7ff; }
 
+    /* ---------- Campos extra (tipo de signo, titular) y semáforo ---------- */
+    .campos-extra { margin-left: 38px; display: grid; gap: 14px; }
+    .campos-extra > label { display: flex; flex-direction: column; gap: 5px; font-size: 13.5px; color: var(--muted); font-weight: 600; }
+    select { width: 100%; border: 1.5px solid var(--border); border-radius: 12px; padding: 13px 15px; font-size: 16px; font-family: inherit; color: var(--text); background: #fff; }
+    select:focus { outline: none; border-color: var(--primary); }
+    .semaforo { display: inline-block; margin-top: 12px; font-size: 16px; font-weight: 800; padding: 9px 20px; border-radius: 999px; letter-spacing: .3px; }
+
     /* ---------- Pie ---------- */
     footer {
       text-align: center;
@@ -349,6 +356,29 @@
       <label class="field">
         <textarea id="productos" placeholder="Ej. Venta de café molido, granos de café y bebidas de café para llevar."></textarea>
       </label>
+
+      <div class="divider"></div>
+
+      <!-- Paso 3: datos de la solicitud (tipo de signo + titular) -->
+      <div class="step">
+        <span class="num">3</span>
+        <h2>Datos de la solicitud</h2>
+      </div>
+      <p class="hint">Recomendado para un dictamen completo (método de búsqueda fonética).</p>
+      <div class="campos-extra">
+        <label>Tipo de signo
+          <select id="tipoSigno">
+            <option value="Nominativa">Nominativa (solo palabras)</option>
+            <option value="Innominada">Innominada (solo diseño)</option>
+            <option value="Mixta">Mixta (palabras + diseño)</option>
+            <option value="Tridimensional">Tridimensional</option>
+            <option value="Otra">Otra (holograma, sonora, olfativa, trade dress)</option>
+          </select>
+        </label>
+        <label>Titular propuesto
+          <input type="text" id="titular" placeholder="Persona o empresa que será dueña de la marca" autocomplete="off" />
+        </label>
+      </div>
 
       <div class="acciones">
         <button type="submit" class="buscar">Buscar clases sugeridas</button>
@@ -605,7 +635,7 @@
     }
 
     // Estado de la búsqueda en curso
-    const estado = { marca: "", productos: "", directas: [], relacionadas: [], seleccion: new Set() };
+    const estado = { marca: "", productos: "", tipoSigno: "", titular: "", directas: [], relacionadas: [], seleccion: new Set() };
 
     const form = document.getElementById("formBusqueda");
     const errorMsg = document.getElementById("errorMsg");
@@ -633,6 +663,8 @@
 
       estado.marca = marca;
       estado.productos = productos;
+      estado.tipoSigno = (document.getElementById("tipoSigno") || {}).value || "";
+      estado.titular = ((document.getElementById("titular") || {}).value || "").trim();
       const dir = clasesConCoincidencia(productos);
       estado.directas = dir.map(d => d.n);
       const setDir = new Set(estado.directas);
@@ -792,6 +824,10 @@
           '<h3>Marca a buscar</h3>' +
           '<div class="marca-grande">' + escapeHtml(estado.marca) + '</div>' +
           '<div class="bloque">' +
+            '<h3>Datos de la solicitud</h3>' +
+            '<p style="font-size:15px;"><strong>Tipo de signo:</strong> ' + escapeHtml(estado.tipoSigno || "—") + '<br><strong>Titular propuesto:</strong> ' + escapeHtml(estado.titular || "Pendiente de definir") + '</p>' +
+          '</div>' +
+          '<div class="bloque">' +
             '<h3>Clases en las que buscarás (' + elegidas.length + ')</h3>' +
             listaTit +
           '</div>' +
@@ -840,7 +876,8 @@
                 '<text id="dPct" x="90" y="100" text-anchor="middle" font-size="36" font-weight="800" fill="#1e293b">0%</text>' +
               '</svg>' +
               '<div class="dash-verdict" id="dVerdict"></div>' +
-              '<p class="dash-note">Probabilidad estimada según las anterioridades vigentes encontradas (criterio orientativo, no oficial).</p>' +
+              '<div class="semaforo" id="dSemaforo"></div>' +
+              '<p class="dash-note">Veredicto y probabilidad estimados según las anterioridades vigentes (criterio orientativo, no oficial).</p>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -947,6 +984,14 @@
       }
       if (g("dPct")) { g("dPct").textContent = Math.round(p) + "%"; g("dPct").setAttribute("fill", color); }
       if (g("dVerdict")) { g("dVerdict").textContent = label + " de registro"; g("dVerdict").style.color = color; }
+
+      // Semáforo del dictamen (método "búsqueda fonética": VIABLE / CON RESERVAS / NO RECOMENDABLE)
+      let sem, semBg, semFg;
+      if (p >= 70) { sem = "🟢 VIABLE"; semBg = "#dcfce7"; semFg = "#15803d"; }
+      else if (p >= 40) { sem = "🟡 VIABLE CON RESERVAS"; semBg = "#fef9c3"; semFg = "#a16207"; }
+      else { sem = "🔴 NO RECOMENDABLE"; semBg = "#fee2e2"; semFg = "#dc2626"; }
+      const semEl = g("dSemaforo");
+      if (semEl) { semEl.textContent = sem; semEl.style.background = semBg; semEl.style.color = semFg; }
     }
 
     // Evita que el texto del usuario rompa el HTML
