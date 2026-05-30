@@ -1,0 +1,5 @@
+# Configuración local de Claude Code (no se sube a GitHub)
+.claude/
+
+# Archivos del sistema macOS
+.DS_Store
