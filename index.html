@@ -276,6 +276,8 @@
     .anexar-box textarea { width: 100%; min-height: 80px; margin-bottom: 12px; }
     .btn-anexar { background: #d97706; color: #fff; border: none; border-radius: 11px; padding: 13px 22px; font-size: 15px; font-weight: 650; cursor: pointer; font-family: inherit; }
     .btn-anexar:hover { background: #b45309; }
+    .anexo-listo { margin-top: 14px; background: #ecfdf5; border: 1.5px solid #86efac; border-radius: 12px; padding: 16px 18px; font-size: 14.5px; color: #166534; line-height: 1.55; }
+    .anexo-listo strong { color: #14532d; }
 
     /* ---------- Tablero / dashboard ---------- */
     .dash-box { margin-top: 14px; background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 22px; }
@@ -848,7 +850,7 @@
           '</div>' +
           '<div class="anexar-box">' +
             '<h3>📎 Paso B · Anexa aquí tu búsqueda del IMPI</h3>' +
-            '<p class="instr-impi">¿Ya hiciste la búsqueda en el IMPI? Sube el archivo que descargaste (PDF, captura…) o pega el listado de resultados. Con eso se analizan las anterioridades y su vigencia.</p>' +
+            '<p class="instr-impi">¿Ya hiciste la búsqueda en el IMPI? Sube aquí el archivo que descargaste (PDF, captura…) o pega el listado. <strong>El análisis lo hace Claude (la IA):</strong> después de anexar, arrastra tu archivo al chat para recibir el dictamen.</p>' +
             '<input type="file" id="archivoImpi" accept=".pdf,.csv,.txt,.html,.htm,image/*" />' +
             '<textarea id="pegaImpi" placeholder="…o pega aquí el texto de los resultados del IMPI"></textarea>' +
             '<button type="button" class="btn-anexar" id="btnAnexar">Anexar resultados</button>' +
@@ -929,15 +931,20 @@
           const tieneArchivo = f && f.files && f.files.length > 0;
           const tieneTexto = t && t.value.trim().length > 0;
           if (!tieneArchivo && !tieneTexto) {
+            okEl.className = "copia-ok";
             okEl.style.color = "#dc2626";
-            okEl.textContent = "Primero sube un archivo o pega el texto de tu búsqueda.";
+            okEl.textContent = "⚠️ Primero sube un archivo o pega el texto de tu búsqueda.";
             return;
           }
-          okEl.style.color = "";
           const partes = [];
           if (tieneArchivo) partes.push("archivo «" + f.files[0].name + "»");
           if (tieneTexto) partes.push(t.value.trim().length + " caracteres de texto");
-          okEl.textContent = "✓ Recibido: " + partes.join(" + ") + ". Para el dictamen, compárteme esto en el chat y te devuelvo el análisis de anterioridades y vigencia.";
+          okEl.className = "anexo-listo";
+          okEl.style.color = "";
+          okEl.innerHTML = "✓ <strong>¡Recibido!</strong> (" + partes.join(" + ") + ")<br><br>" +
+            "📎 <strong>Siguiente paso:</strong> arrastra tu archivo al <strong>chat de Claude</strong> y te entrego el dictamen completo (anterioridades, vigencia y veredicto).<br>" +
+            "<em>La app guarda tu búsqueda, pero el análisis del PDF lo hace la IA — una página web no puede leer un PDF por sí sola.</em>";
+          okEl.scrollIntoView({ behavior: "smooth", block: "center" });
         });
       }
 
