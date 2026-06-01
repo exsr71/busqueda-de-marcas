@@ -293,6 +293,11 @@
     .dash-gauge { text-align: center; margin-top: 10px; }
     .dash-verdict { font-size: 18px; font-weight: 700; margin-top: 2px; }
     .dash-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .dash-listas { display: grid; gap: 12px; margin: 18px 0 4px; }
+    .dash-listas > label { font-size: 13px; color: var(--muted); font-weight: 600; display: flex; flex-direction: column; gap: 5px; }
+    .dash-listas textarea { width: 100%; min-height: 64px; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text); resize: vertical; }
+    .dash-descargas { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
+    .dash-descargas h4 { font-size: 15px; color: var(--text); margin-bottom: 10px; }
     @media (max-width: 520px) { .dash-inputs { grid-template-columns: 1fr; } .dash-num { font-size: 24px; } }
 
     /* ---------- Cobertura sugerida ---------- */
@@ -871,6 +876,12 @@
               '<div class="dash-card"><div class="dash-num" id="cRelev">—</div><div class="dash-lbl">🎯 Relevantes</div></div>' +
               '<div class="dash-card"><div class="dash-num" id="cRev">—</div><div class="dash-lbl">🔬 Revisadas a fondo</div></div>' +
             '</div>' +
+            '<div class="dash-listas">' +
+              '<label>🎯 ¿Cuáles son las relevantes? <span style="font-weight:400;">(una por línea)</span>' +
+                '<textarea id="listaRelev" placeholder="Denominación — Titular — Clase — estatus"></textarea></label>' +
+              '<label>🔬 ¿Cuáles se revisaron a fondo? <span style="font-weight:400;">(con vigencia)</span>' +
+                '<textarea id="listaRev" placeholder="Denominación (exp. ...) — VIGENTE/CADUCA — ¿obstáculo?"></textarea></label>' +
+            '</div>' +
             '<div class="dash-gauge">' +
               '<svg width="180" height="180" viewBox="0 0 180 180">' +
                 '<circle cx="90" cy="90" r="70" fill="none" stroke="#e2e8f0" stroke-width="18"></circle>' +
@@ -880,6 +891,14 @@
               '<div class="dash-verdict" id="dVerdict"></div>' +
               '<div class="semaforo" id="dSemaforo"></div>' +
               '<p class="dash-note">Veredicto y probabilidad estimados según las anterioridades vigentes (criterio orientativo, no oficial).</p>' +
+            '</div>' +
+            '<div class="dash-descargas">' +
+              '<h4>📥 Descargar entregables</h4>' +
+              '<div class="impi-btns">' +
+                '<button type="button" class="btn-mini" id="btnCsv">📊 Tabla comparativa (CSV)</button>' +
+                '<button type="button" class="btn-mini" id="btnDictamen">📝 Dictamen (HTML imprimible)</button>' +
+              '</div>' +
+              '<p class="dash-note">El dictamen HTML se abre en tu navegador y puedes guardarlo como PDF (Imprimir → Guardar como PDF).</p>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -959,6 +978,12 @@
         renderDash();
       }
 
+      // Descarga de entregables
+      const btnCsv = document.getElementById("btnCsv");
+      if (btnCsv) btnCsv.addEventListener("click", descargarCsv);
+      const btnDictamen = document.getElementById("btnDictamen");
+      if (btnDictamen) btnDictamen.addEventListener("click", descargarDictamen);
+
       resultado.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -999,6 +1024,64 @@
       else { sem = "🔴 NO RECOMENDABLE"; semBg = "#fee2e2"; semFg = "#dc2626"; }
       const semEl = g("dSemaforo");
       if (semEl) { semEl.textContent = sem; semEl.style.background = semBg; semEl.style.color = semFg; }
+    }
+
+    // ----------------------------------------------------------
+    // Descarga de entregables (CSV de la tabla + dictamen HTML)
+    // ----------------------------------------------------------
+    function valDash(id) { const e = document.getElementById(id); return e ? e.value : ""; }
+
+    function descargarArchivo(nombre, contenido, tipo) {
+      const blob = new Blob([contenido], { type: tipo });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = nombre;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+    }
+
+    function descargarCsv() {
+      const clases = [...estado.seleccion].sort(function (a, b) { return a - b; });
+      const relev = valDash("listaRelev").split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+      const q = function (s) { return '"' + String(s).split('"').join('""') + '"'; };
+      let csv = "Marca propuesta," + q(estado.marca || "") + "\n";
+      csv += "Tipo de signo," + q(estado.tipoSigno || "") + "\n";
+      csv += "Titular," + q(estado.titular || "Pendiente") + "\n";
+      csv += "Clase(s)," + q(clases.join(" ")) + "\n";
+      csv += "Arrojadas," + q(valDash("dTotal")) + "\n";
+      csv += "Relevantes," + q(valDash("dRelev")) + "\n";
+      csv += "Revisadas a fondo," + q(valDash("dRev")) + "\n";
+      csv += "Obstaculos vigentes," + q(valDash("dObst")) + "\n\n";
+      csv += "Anterioridades relevantes\n";
+      if (relev.length) relev.forEach(function (l) { csv += q(l) + "\n"; });
+      else csv += q("(ninguna)") + "\n";
+      descargarArchivo("tabla-" + (estado.marca || "marca").split(/\s+/).join("_") + ".csv", "﻿" + csv, "text/csv;charset=utf-8");
+    }
+
+    function descargarDictamen() {
+      const clases = [...estado.seleccion].sort(function (a, b) { return a - b; });
+      const cob = clases.map(function (n) { return "Clase " + n + ": " + (COBERTURA[n] || []).join("; "); }).join("<br>");
+      const verdict = (document.getElementById("dSemaforo") || {}).textContent || "";
+      const pct = (document.getElementById("dPct") || {}).textContent || "";
+      const pre = function (s) { return "<pre>" + escapeHtml(s || "(ninguna)") + "</pre>"; };
+      const html =
+        "<!DOCTYPE html><html lang=es><head><meta charset=UTF-8>" +
+        "<title>Dictamen - " + escapeHtml(estado.marca) + "</title>" +
+        "<style>body{font-family:Arial,Helvetica,sans-serif;max-width:760px;margin:30px auto;padding:0 22px;color:#1e293b;line-height:1.6}" +
+        "h1{color:#3730a3;font-size:24px}h2{color:#4338ca;font-size:17px;border-bottom:2px solid #eef2ff;padding-bottom:5px;margin-top:26px}" +
+        "pre{white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-family:inherit;font-size:14px}" +
+        ".sem{display:inline-block;padding:6px 16px;border-radius:999px;font-weight:800;background:#f1f5f9}.muted{color:#64748b;font-size:13px}</style></head><body>" +
+        "<h1>Dictamen preliminar de registrabilidad marcaria</h1>" +
+        "<p class=muted>Generado por la app Busqueda de Marcas - Documento preliminar y orientativo.</p>" +
+        "<h2>I. Antecedentes</h2><p><b>Marca:</b> " + escapeHtml(estado.marca) + "<br><b>Tipo de signo:</b> " + escapeHtml(estado.tipoSigno || "-") + "<br><b>Titular propuesto:</b> " + escapeHtml(estado.titular || "Pendiente de definir") + "<br><b>Clase(s):</b> " + clases.join(", ") + "</p>" +
+        "<h2>II. Cobertura sugerida</h2><p>" + cob + "</p>" +
+        "<h2>III. Resultados de la busqueda</h2><p>Arrojadas: <b>" + escapeHtml(valDash("dTotal")) + "</b> &nbsp;|&nbsp; Relevantes: <b>" + escapeHtml(valDash("dRelev")) + "</b> &nbsp;|&nbsp; Revisadas a fondo: <b>" + escapeHtml(valDash("dRev")) + "</b> &nbsp;|&nbsp; Obstaculos vigentes: <b>" + escapeHtml(valDash("dObst")) + "</b></p>" +
+        "<h2>IV. Anterioridades relevantes</h2>" + pre(valDash("listaRelev")) +
+        "<h2>V. Revisadas a fondo (vigencia)</h2>" + pre(valDash("listaRev")) +
+        "<h2>VI. Veredicto</h2><p><span class=sem>" + escapeHtml(verdict) + "</span> &nbsp; Probabilidad estimada de registro: <b>" + escapeHtml(pct) + "</b></p>" +
+        "<h2>VII. Reservas y limitaciones</h2><p class=muted>Analisis preliminar orientativo basado en informacion publica de Acervo Marcas y Marcanet (IMPI). No sustituye la busqueda oficial ante el IMPI ni la asesoria de un especialista en propiedad industrial. La decision final corresponde al examinador del IMPI.</p>" +
+        "</body></html>";
+      descargarArchivo("dictamen-" + (estado.marca || "marca").split(/\s+/).join("_") + ".html", html, "text/html;charset=utf-8");
     }
 
     // Evita que el texto del usuario rompa el HTML
